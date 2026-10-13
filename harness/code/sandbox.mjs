@@ -7,8 +7,9 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SSH_HOST = process.env.SANDBOX_HOST || "<spark-user>@<spark-host>";
-export const IMAGE = process.env.SANDBOX_IMAGE || "lcb-judge:py312-np"; // python:3.12-slim + numpy 2.3.3 + scipy 1.16.2 (see README)
+const SSH_HOST = process.env.SANDBOX_HOST;
+if (!SSH_HOST || !/^[\w.@-]+$/.test(SSH_HOST)) throw new Error("set SANDBOX_HOST=user@host (the machine that runs the Docker sandbox)");
+export const IMAGE = process.env.SANDBOX_IMAGE || "lcb-judge:py312-np"; // python:3.12-slim + numpy 2.3.3 + scipy 1.16.2 (build: harness/code/sandbox/Dockerfile)
 const MAX_PARALLEL = Number(process.env.SANDBOX_PARALLEL || 2);
 const PER_TEST = Number(process.env.SANDBOX_PER_TEST || 10);
 

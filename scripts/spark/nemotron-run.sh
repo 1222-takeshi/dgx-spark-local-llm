@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# one model at a time: loading two at once exhausted memory and hung the host
+docker rm -f ornith-b12x-serve gemma4-serve >/dev/null 2>&1 || true
 IMAGE="eugr/spark-vllm-b12x@sha256:d999354461ae004c754333fd50a69867816758c864687e41b9a224b748a2c104"
 H=$HOME/.cache/huggingface/hub
 SNAP=$(ls -d $H/models--nvidia--NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4/snapshots/*/ | head -1); SNAP=${SNAP%/}

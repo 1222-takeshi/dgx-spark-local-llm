@@ -87,7 +87,7 @@ async function askOnce(item) {
   }
   if (backend === "codex") {
     // allowlist env only: never leak API_KEY / BASE_URL or other secrets to the agent
-    const env = { PATH: process.env.PATH, HOME: process.env.HOME, LANG: process.env.LANG || "en_US.UTF-8", CODEX_HOME: process.env.CODEX_HOME || join(process.env.HOME, ".codex-plus") };
+    const env = { PATH: process.env.PATH, HOME: process.env.HOME, LANG: process.env.LANG || "en_US.UTF-8", CODEX_HOME: process.env.CODEX_HOME || join(process.env.HOME, ".codex") };
     const of = join(cwd, `o-${Math.random().toString(36).slice(2)}.txt`);
     const r = await run("codex", ["exec", "-m", model, "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "--ignore-rules", "-o", of, "-"],
       { input: `${SYS}\n\n${text}`, env, timeoutMs });

@@ -10,5 +10,7 @@ data/
 *.key
 *api-key*
 node_modules/
+__pycache__/
+*.pyc
 .DS_Store
 .claude/settings.local.json

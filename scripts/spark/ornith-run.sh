@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Custom launch (no HF token needed; weights already cached). Keeps the two upstream patches.
 set -euo pipefail
+# one model at a time: loading two at once exhausted memory and hung the host
+docker rm -f gemma4-serve nemotron-serve >/dev/null 2>&1 || true
 IMAGE="eugr/spark-vllm-b12x@sha256:d999354461ae004c754333fd50a69867816758c864687e41b9a224b748a2c104"
 SNAP=$(ls -d $HOME/.cache/huggingface/hub/models--ornith-ai--Ornith-1.5-35B-A3B-NVFP4/snapshots/*/ | head -1); SNAP=${SNAP%/}
 docker rm -f ornith-b12x-serve >/dev/null 2>&1 || true

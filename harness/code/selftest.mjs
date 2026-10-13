@@ -36,7 +36,7 @@ for (const d of ["easy", "medium", "hard"]) {
 }
 // unknown problem / missing private tests must never pass
 const r0 = await judge("no_such_problem", REF.abc400_a); line(r0.status === "judge_error", "negative unknown-problem ->", r0.status);
-const left = execFileSync("ssh", ["-o", "BatchMode=yes", process.env.SANDBOX_HOST || "<spark-user>@<spark-host>",
+const left = execFileSync("ssh", ["-o", "BatchMode=yes", process.env.SANDBOX_HOST,
   "ls -d /tmp/lcbj.* 2>/dev/null; docker ps -a --filter name=lcbj --format '{{.Names}}'; echo END"]).toString();
 line(left.trim() === "END", "no leftovers on Spark:", JSON.stringify(left));
 console.log(bad ? `SELFTEST FAILED (${bad})` : "SELFTEST PASSED");

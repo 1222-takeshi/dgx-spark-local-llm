@@ -50,7 +50,7 @@ async function ask(item) {
   if (backend === "codex") {
     const of = join(cwd, `o-${Math.random().toString(36).slice(2)}.txt`);
     const r = await run("codex", ["exec", "-m", model, "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "--ignore-rules", "-o", of, "-"],
-      { input: `${SYS}\n\n${item.prompt}`, env: { CODEX_HOME: process.env.CODEX_HOME || join(process.env.HOME, ".codex-plus") }, timeoutMs });
+      { input: `${SYS}\n\n${item.prompt}`, env: { CODEX_HOME: process.env.CODEX_HOME || join(process.env.HOME, ".codex") }, timeoutMs });
     if (!existsSync(of)) return { error: `codex exit ${r.code}: ${(r.se || r.so).slice(-300)}` };
     return { reply: readFileSync(of, "utf8") };
   }
