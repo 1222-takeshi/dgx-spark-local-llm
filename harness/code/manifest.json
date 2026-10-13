@@ -1,0 +1,336 @@
+{
+ "dataset": "livecodebench/code_generation_lite",
+ "dataset_revision": "0fe84c3912ea0c4d4a78037083943e8f0c4dd505",
+ "source_file": "test6.jsonl",
+ "source_sha256": "bb4c364f71921c4495a6ad15abe1a927350b720009f4933e2e71f8af0f6fd1f5",
+ "seed": 20261010,
+ "selection_target": {
+  "easy": 15,
+  "medium": 25,
+  "hard": 20
+ },
+ "excluded_multi_answer": 8,
+ "excluded_multi_answer_ids": [
+  "abc395_a",
+  "abc396_e",
+  "abc397_d",
+  "abc398_f",
+  "arc190_a",
+  "arc191_c",
+  "arc192_b",
+  "arc192_a"
+ ],
+ "filters": "atcoder stdin only, no float-tolerance statements, no multi-answer/case-insensitive statements, private blob <= 8000000 bytes",
+ "note": "test6 is the newest file in the HF repo (contest dates below); nothing after 2025-04 exists in this dataset",
+ "counts": {
+  "easy": 15,
+  "medium": 24,
+  "hard": 21
+ },
+ "date_range": [
+  "2025-01-04",
+  "2025-04-06"
+ ],
+ "problems": [
+  {
+   "id": "abc396_c",
+   "difficulty": "medium",
+   "date": "2025-03-08"
+  },
+  {
+   "id": "abc399_a",
+   "difficulty": "easy",
+   "date": "2025-03-29"
+  },
+  {
+   "id": "abc389_g",
+   "difficulty": "hard",
+   "date": "2025-01-18"
+  },
+  {
+   "id": "abc387_b",
+   "difficulty": "easy",
+   "date": "2025-01-04"
+  },
+  {
+   "id": "arc193_b",
+   "difficulty": "hard",
+   "date": "2025-02-23"
+  },
+  {
+   "id": "abc400_a",
+   "difficulty": "easy",
+   "date": "2025-04-05"
+  },
+  {
+   "id": "abc388_d",
+   "difficulty": "medium",
+   "date": "2025-01-11"
+  },
+  {
+   "id": "abc397_f",
+   "difficulty": "hard",
+   "date": "2025-03-15"
+  },
+  {
+   "id": "abc394_f",
+   "difficulty": "hard",
+   "date": "2025-02-22"
+  },
+  {
+   "id": "abc394_d",
+   "difficulty": "medium",
+   "date": "2025-02-22"
+  },
+  {
+   "id": "arc196_a",
+   "difficulty": "hard",
+   "date": "2025-04-06"
+  },
+  {
+   "id": "abc393_b",
+   "difficulty": "easy",
+   "date": "2025-02-15"
+  },
+  {
+   "id": "arc195_a",
+   "difficulty": "medium",
+   "date": "2025-03-23"
+  },
+  {
+   "id": "arc196_b",
+   "difficulty": "hard",
+   "date": "2025-04-06"
+  },
+  {
+   "id": "abc399_c",
+   "difficulty": "medium",
+   "date": "2025-03-29"
+  },
+  {
+   "id": "abc392_f",
+   "difficulty": "hard",
+   "date": "2025-02-08"
+  },
+  {
+   "id": "abc393_a",
+   "difficulty": "easy",
+   "date": "2025-02-15"
+  },
+  {
+   "id": "abc390_c",
+   "difficulty": "medium",
+   "date": "2025-01-25"
+  },
+  {
+   "id": "arc194_a",
+   "difficulty": "medium",
+   "date": "2025-03-09"
+  },
+  {
+   "id": "abc398_b",
+   "difficulty": "medium",
+   "date": "2025-03-22"
+  },
+  {
+   "id": "abc397_a",
+   "difficulty": "easy",
+   "date": "2025-03-15"
+  },
+  {
+   "id": "arc191_d",
+   "difficulty": "hard",
+   "date": "2025-01-26"
+  },
+  {
+   "id": "abc388_f",
+   "difficulty": "hard",
+   "date": "2025-01-11"
+  },
+  {
+   "id": "abc399_d",
+   "difficulty": "medium",
+   "date": "2025-03-29"
+  },
+  {
+   "id": "abc398_d",
+   "difficulty": "hard",
+   "date": "2025-03-22"
+  },
+  {
+   "id": "abc395_e",
+   "difficulty": "hard",
+   "date": "2025-03-01"
+  },
+  {
+   "id": "abc400_c",
+   "difficulty": "medium",
+   "date": "2025-04-05"
+  },
+  {
+   "id": "abc390_d",
+   "difficulty": "medium",
+   "date": "2025-01-25"
+  },
+  {
+   "id": "abc400_b",
+   "difficulty": "easy",
+   "date": "2025-04-05"
+  },
+  {
+   "id": "abc397_g",
+   "difficulty": "hard",
+   "date": "2025-03-15"
+  },
+  {
+   "id": "arc195_e",
+   "difficulty": "hard",
+   "date": "2025-03-23"
+  },
+  {
+   "id": "abc391_a",
+   "difficulty": "easy",
+   "date": "2025-02-01"
+  },
+  {
+   "id": "abc387_c",
+   "difficulty": "medium",
+   "date": "2025-01-04"
+  },
+  {
+   "id": "abc391_d",
+   "difficulty": "medium",
+   "date": "2025-02-01"
+  },
+  {
+   "id": "abc395_c",
+   "difficulty": "medium",
+   "date": "2025-03-01"
+  },
+  {
+   "id": "abc389_e",
+   "difficulty": "hard",
+   "date": "2025-01-18"
+  },
+  {
+   "id": "abc388_a",
+   "difficulty": "easy",
+   "date": "2025-01-11"
+  },
+  {
+   "id": "abc392_c",
+   "difficulty": "medium",
+   "date": "2025-02-08"
+  },
+  {
+   "id": "abc390_a",
+   "difficulty": "easy",
+   "date": "2025-01-25"
+  },
+  {
+   "id": "abc400_d",
+   "difficulty": "medium",
+   "date": "2025-04-05"
+  },
+  {
+   "id": "arc193_a",
+   "difficulty": "hard",
+   "date": "2025-02-23"
+  },
+  {
+   "id": "abc394_c",
+   "difficulty": "medium",
+   "date": "2025-02-22"
+  },
+  {
+   "id": "arc194_d",
+   "difficulty": "hard",
+   "date": "2025-03-09"
+  },
+  {
+   "id": "abc396_d",
+   "difficulty": "medium",
+   "date": "2025-03-08"
+  },
+  {
+   "id": "arc190_d",
+   "difficulty": "hard",
+   "date": "2025-01-12"
+  },
+  {
+   "id": "abc398_a",
+   "difficulty": "easy",
+   "date": "2025-03-22"
+  },
+  {
+   "id": "abc388_c",
+   "difficulty": "medium",
+   "date": "2025-01-11"
+  },
+  {
+   "id": "abc392_a",
+   "difficulty": "easy",
+   "date": "2025-02-08"
+  },
+  {
+   "id": "abc389_d",
+   "difficulty": "medium",
+   "date": "2025-01-18"
+  },
+  {
+   "id": "arc195_c",
+   "difficulty": "hard",
+   "date": "2025-03-23"
+  },
+  {
+   "id": "arc192_d",
+   "difficulty": "hard",
+   "date": "2025-02-09"
+  },
+  {
+   "id": "abc390_b",
+   "difficulty": "easy",
+   "date": "2025-01-25"
+  },
+  {
+   "id": "abc396_a",
+   "difficulty": "easy",
+   "date": "2025-03-08"
+  },
+  {
+   "id": "abc398_c",
+   "difficulty": "medium",
+   "date": "2025-03-22"
+  },
+  {
+   "id": "abc391_f",
+   "difficulty": "hard",
+   "date": "2025-02-01"
+  },
+  {
+   "id": "arc191_a",
+   "difficulty": "medium",
+   "date": "2025-01-26"
+  },
+  {
+   "id": "arc196_c",
+   "difficulty": "hard",
+   "date": "2025-04-06"
+  },
+  {
+   "id": "abc397_b",
+   "difficulty": "medium",
+   "date": "2025-03-15"
+  },
+  {
+   "id": "abc392_b",
+   "difficulty": "easy",
+   "date": "2025-02-08"
+  },
+  {
+   "id": "abc397_c",
+   "difficulty": "medium",
+   "date": "2025-03-15"
+  }
+ ]
+}
