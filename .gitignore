@@ -1,0 +1,14 @@
+# third-party benchmark data and caches: never redistribute
+cache/
+raw/
+data/
+**/results-raw/
+*.jsonl
+# local/secret material
+.env
+.env.*
+*.key
+*api-key*
+node_modules/
+.DS_Store
+.claude/settings.local.json
