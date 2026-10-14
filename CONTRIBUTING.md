@@ -6,8 +6,8 @@ DGX Spark でローカル LLM を運用するための**正本（single source o
 
 | 層 | 中身 |
 |---|---|
-| 方針 | 運用ルール（`dev-rules.md`）、`docs/operations.md`、モデルの階層（T0/T1/T2）、同時 Agent 数の決め方 |
-| 再現手段 | Spark の起動スクリプト、評価ハーネス、新しい PC の導入手順 |
+| 方針 | 運用ルール（`dev-rules.md`。追加予定: #5）、`docs/operations.md`、モデルの階層（T0/T1/T2）、同時 Agent 数の決め方 |
+| 再現手段 | Spark の起動スクリプト、評価ハーネス、新しい PC の導入手順（追加予定: #5） |
 | 記録 | 評価結果の集計（`results/`）、日付付きの調査メモ（`docs/survey/`） |
 
 ## 使う場所
@@ -44,7 +44,7 @@ DGX Spark でローカル LLM を運用するための**正本（single source o
 ## 運用ルールの配布
 
 - 正本はこのリポジトリ。`~/.claude/CLAUDE.md` は配布物なので、直接編集しない。
-- 反映はリポジトリを直してから、ハッシュ確認つきのスクリプトで各 PC に行う。
+- 反映はリポジトリを直してから、ハッシュ確認つきのスクリプトで各 PC に行う（スクリプトは追加予定: #5。それまでは手動）。
 
 ## 変更手順
 
@@ -56,13 +56,13 @@ Issue → ブランチ → 実装 → 検査 → レビュー → PR → squash 
 
 ## CI（GitHub Actions）
 
-public にする目的は、GitHub-hosted runner を使うこと。
+public にする目的は、GitHub-hosted runner を使うこと。以下は方針で、実装は #6（現状 `.github/` は未作成）。
 
-- 実行は **GitHub-hosted runner のみ**。self-hosted runner を指定しない（Spark で別の runner が動いているが、このリポジトリでは使わない）。
+- 実行は **GitHub-hosted runner のみ**。self-hosted runner を指定しない。`pull_request_target` は使わない。
 - `permissions: contents: read` を既定にする。リポジトリの secrets を使うジョブは作らない。
 - 第三者の action はコミット SHA で固定する。
-- fork からの PR は、ワークフローの実行を承認制にする。
-- 検査の対象: ハーネスの自己テスト（`selftest.mjs`）、シェルの lint、秘密情報の検査、禁止文字列（実ホスト名・メールアドレス）の検査、リンク切れ。
+- fork からの PR は、ワークフローの実行を承認制にする（リポジトリ設定: Settings → Actions → Fork pull request workflows）。
+- 検査の対象: ハーネスの自己テスト（`harness/code/selftest.mjs`）、シェルの lint、秘密情報の検査、禁止文字列（実ホスト名・メールアドレス）の検査、リンク切れ。履歴のメールアドレス（noreply）は CI では見られないので、公開前に手で確認する。
 
 ## 公開の前提
 
