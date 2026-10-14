@@ -28,6 +28,7 @@ NVIDIA DGX Spark（GB10・128GB 統合メモリ）**1 台**で動かすローカ
 | `docs/survey/` | 日付付きのサーベイ（出典リンクと確度つき） |
 | `harness/` | 基礎（`basics/`）とコーディング（`code/`）の評価ハーネス |
 | `scripts/spark/` | Spark 上のモデル起動スクリプト（イメージは digest 固定） |
+| `CONTRIBUTING.md` | 役割・置くもの/置かないもの・変更手順・CI の方針 |
 
 ## 再現するときの注意
 
