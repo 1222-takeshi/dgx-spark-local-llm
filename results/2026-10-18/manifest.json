@@ -1,0 +1,269 @@
+{
+  "status": "complete",
+  "date": "2026-10-18",
+  "hardware": {
+    "platform": "NVIDIA DGX Spark GB10",
+    "units": 1,
+    "os_memory_gib_approx": 121,
+    "driver": "580.178.04",
+    "compute_capability": "12.1",
+    "mem_available_stop_threshold_gib": 20,
+    "memory_sampling_seconds": 2
+  },
+  "coding": {
+    "dataset": "livecodebench/code_generation_lite",
+    "dataset_revision": "0fe84c3912ea0c4d4a78037083943e8f0c4dd505",
+    "source_file": "test6.jsonl",
+    "source_sha256": "bb4c364f71921c4495a6ad15abe1a927350b720009f4933e2e71f8af0f6fd1f5",
+    "subset_seed": 20261010,
+    "subset_sha256": "cde04d487cb46a45beda2af75e6f5920570ab4fb714e63a31eab55e10361c6c0",
+    "problems": 60,
+    "difficulty_counts": {
+      "easy": 15,
+      "medium": 24,
+      "hard": 21
+    },
+    "nonthinking_max_tokens": 4096,
+    "thinking_max_tokens": 16384,
+    "concurrency": "per-model phase values",
+    "aggregation": "latest row per problem ID; incomplete if infra errors remain",
+    "temperature": 0,
+    "top_p": 1,
+    "request_seed": 1234,
+    "executed_runner_sha256": "4e703e190de810a9856839a32f2126f628343420fd4d14dc75279ac6eac8582c",
+    "executed_sandbox_sha256": "14f83d5fb039a5b18ef4d5649602396a2af3c5fe9debee5f9355e4af832635b2",
+    "judge_sha256": "c60025acc76a90369a9fefc350e2343d69adfa7c792ca6681a750d9d4ccc61e3",
+    "sandbox_image_id": "sha256:998dda30fe8d8f0061933a0684594e802e6546bfee0c919b2a2c08533e55ccd4"
+  },
+  "basics": {
+    "suite_version": 1,
+    "scoring_version": 2,
+    "problems": 150,
+    "per_category": 25,
+    "sample_seed_prefix": "sample-",
+    "sparkdash_commit": "fab8dadff951d1c8cc1450a657805d8e3ea5c9f6",
+    "suite_sha256": "b632160c569a78c020cdda1705dbcac5c679134dfbc7357b0968f22402b35e4b",
+    "concurrency": "per-model phase values"
+  },
+  "bolt": {
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB",
+    "model_revision": "c6cc2e8ffa353403213d6b9b18aaf8eb684d705a",
+    "drafter": "nvidia/NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB-LiLiCorr",
+    "drafter_revision": "abd478065678ee83a93821c4b3f512da24e4cecb",
+    "image": "vllm/vllm-openai@sha256:a7deff2c216def98c193352aca50fb03a2ee29231355b3033dc3789009f6d23e",
+    "image_id": "sha256:bc7762f87a5ed857f4793af3ac2a7d3fd0eb76a128365bdd78905325591cca68",
+    "runtime": {
+      "vllm": "0.32.0rc1.dev100+g77154ca61",
+      "b12x": "1.5.1",
+      "torch": "2.13.0+cu130",
+      "flashinfer": "0.7.0.post1",
+      "transformers": "5.19.0",
+      "nccl": "2.29.7"
+    },
+    "max_model_len": 262144,
+    "max_num_seqs": 8,
+    "gpu_memory_utilization": 0.55,
+    "kv_cache_dtype": "fp8",
+    "mamba_cache_dtype": "bfloat16",
+    "speculative_method": "dflash",
+    "speculative_tokens": 7,
+    "server_seed": 42,
+    "tool_eval_run_id": "te-20261018-045328-qlm4",
+    "results": {
+      "basics_pass": 141,
+      "code_non_thinking_pass": 23,
+      "code_thinking16k_pass": 29,
+      "code_non_thinking_truncated": 17,
+      "code_thinking16k_truncated": 30,
+      "tool_eval_score": 88,
+      "long_pass": 3,
+      "long_cases": 4,
+      "speed_end_to_end_tps": {
+        "1": [
+          72.89817182561832,
+          68.1042493825974
+        ],
+        "4": [
+          155.2488328353329,
+          161.06810014129934
+        ],
+        "8": [
+          223.38460153607895,
+          232.54701190263583
+        ]
+      }
+    },
+    "basics_concurrency": 3,
+    "coding_concurrency": 3,
+    "v2_model_runner": true,
+    "linear_backend": "b12x",
+    "moe_backend": "b12x",
+    "attention_backend": "FLASHINFER",
+    "mamba_backend": "flashinfer",
+    "mamba_cache_mode": "align",
+    "chunked_prefill": true,
+    "prefix_caching": true,
+    "tool_call_parser": "qwen3_coder",
+    "reasoning_parser": "ultra_v3",
+    "tensor_parallel_size": 1,
+    "served_name": "nemotron-3.5-bolt-74b-a9b-24gb",
+    "tool_eval_scoring": {
+      "executed": 69,
+      "scored": 69,
+      "earned": 122,
+      "possible": 138,
+      "excluded": [],
+      "safety_warning_count": 1
+    }
+  },
+  "qwen_qad": {
+    "status": "complete",
+    "model": "nvidia/Qwen3.8-Flash-Next-FP4-Local",
+    "model_revision": "b9ce18a6887e18c089fdea8509a33e63429a3300",
+    "recipe": "https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark-TensorFold",
+    "recipe_commit": "06df57f8a76c74fec908c87fdbc4dd702ff598f9",
+    "tensorfold_ref": "db281878ddb836fd0df510d8771ecb7e0fe47d26",
+    "base_image_requested": "nvcr.io/nvidia/pytorch:26.07-py3",
+    "memory_reserve_gib": 28,
+    "load_memory_floor_gib": 20,
+    "vision": false,
+    "base_image_digest": "nvcr.io/nvidia/pytorch@sha256:2140e699b3beaf7f96a0081fd9c9406bc3832b435cdb60dfa2d261f7d2f34a1c",
+    "image_id": "sha256:de2f835205b3d3224e1345f499eb82055304b68785086bab6e5ebee66b132637",
+    "patches": "1352ddddeca1",
+    "zig_version": "0.17.0",
+    "initial_load_seconds": 53.9,
+    "initial_sequence_pool_gib": 14.35,
+    "kv_dtype": "fp8",
+    "drafts": true,
+    "context": 262144,
+    "initial_parallel": 1,
+    "eval_parallel": 4,
+    "basics_concurrency": 2,
+    "nonthinking_coding_concurrency": 2,
+    "thinking_coding_concurrency": 4,
+    "post_admission_mem_available_gib": 40.5,
+    "image_packages": {
+      "torch": "2.13.0a0+9186a08b2c.nv26.7.59513937",
+      "transformers": "5.17.0",
+      "huggingface_hub": "1.24.0",
+      "av": "19.0.1"
+    },
+    "cuda_compatibility": {
+      "kernel_driver": "580.178.04",
+      "container_cuda": "13.3",
+      "compatibility_driver": "610.43.02"
+    },
+    "eval_sequence_pool_gib": 13.5,
+    "results": {
+      "basics_pass": 142,
+      "code_non_thinking_pass": 38,
+      "code_thinking16k_pass": 35,
+      "code_non_thinking_truncated": 17,
+      "code_thinking16k_truncated": 25,
+      "tool_eval_score": 86,
+      "long_pass": 4,
+      "long_cases": 4,
+      "speed_end_to_end_tps": {
+        "1": [
+          52.721290862708535,
+          52.38468354727285
+        ],
+        "4": [
+          133.77860152549724,
+          125.63540331437449
+        ]
+      }
+    },
+    "served_name": "Qwen3.8-Flash-Next",
+    "tool_eval_run_id": "te-20261018-072441-kcn4",
+    "tool_eval_scoring": {
+      "executed": 69,
+      "scored": 68,
+      "earned": 117,
+      "possible": 136,
+      "excluded": [
+        "TC-64"
+      ],
+      "safety_warning_count": 0
+    }
+  },
+  "raw_sha256": {
+    "bolt_basics": "53d7c0ebe5dde4bcc7983586b69656239a0fc5379b8c9790bacfb4c97c156bce",
+    "bolt_code_nonthinking": "986e38f5ea3ca702ec3d95a57f3cb73f1b94207f65ba9c259b5e11669018fc92",
+    "baseline_qwen27b_nonthinking": "6f1da962117c03f666de55c7f417e4b63a6e7fcfb88dc1f3cb8528022754b2f5",
+    "baseline_qwen27b_thinking16k": "23058f8f25ca0365c6f9deb84a0a2b1c9065549c76b938d937d90e594b50fbef",
+    "bolt_code_thinking16k": "4b57d6c2fe0ad87eb1d7c846c5a655e006666d5860d3fff2a841bf1e7d403dcb",
+    "bolt_speed": "e7c20338195846c58830ad27b7762db2161fb3cf95423444d7e231e3a43af436",
+    "bolt_long": "899f25e47b37ad5539b47123a1c6ee84e62dcf4fd8b16b2ca4cbe3957295d5d2",
+    "bolt_tool_eval_result": "25466e35d4712f50d462b9253af640d45e9ad309c4df17a1848260cdc340c691",
+    "qwen_code_nonthinking": "d3009962964492164245661289b37a620c1179bf3b3dc345b00dc6527770c806",
+    "qwen_basics": "03b67a27e4e455c4ea21a617ae4f9414ee070820d3463d7ae67dd8cfa2fb4242",
+    "qwen_code_thinking16k": "9f4dcec81124be541619c4dfcbad1ff6b3d827f2d523c569ead2025cb6d66068",
+    "qwen_speed": "a5630896eec018ebd0039357a9d94bc4f21610c3812da38fac91a3541fb2e122",
+    "qwen_long": "8322783c440696c1e14e24e06ac777a6579f661e852c4d0f22874d8f9750cc82",
+    "qwen_tool_eval_result": "be26957778356285d8c0e14984dfeb2fa6d5b31ebd29036f5e04fbcb6fd14564",
+    "memory_observation": "f1d3b4f1e17c269711e5c126feb378f02e91fa3a8d6b9a06f5693a280fda0b0a",
+    "qwen_protocol": "96882cd4110e21d069cb1b839a443c026a5643a745591fa0e16619855df896ae",
+    "qwen_smoke": "d2c0279cb76ad79c7fc04f50a985a169be06deaa98de6dea6693a151863d7bd8",
+    "bolt_smoke": "b28fc8fdcedf13d248abfcadb5979ba963e7ae6a851476f8f07403493388a802",
+    "baseline_flashnext_nonthinking": "d86c7302b6295c06424da7a3199ae5673be9856611443097b2e6e6c8736976c0",
+    "baseline_flashnext_thinking16k": "5b3fde1a1b71699f32fb6a65c5999612f30df3bff5116de10d639942a3883446"
+  },
+  "tool_eval": {
+    "version": "2.8.0",
+    "source_commit": "0a1ba68c7709f429298bc92417a9e003f61de4e3",
+    "scenarios": 69,
+    "thinking": true,
+    "max_tokens": 16384,
+    "timeout_seconds_per_request": 120,
+    "max_turns": 8,
+    "temperature": 0
+  },
+  "probes": {
+    "output_tokens": 512,
+    "thinking": false,
+    "repetitions": 2,
+    "bolt_concurrency": [
+      1,
+      4,
+      8
+    ],
+    "qwen_concurrency": [
+      1,
+      4
+    ],
+    "aggregate": "sum completion_tokens / wall seconds until all responses complete",
+    "client": "SSH loopback forwarding; no explicit prefix-cache flush",
+    "bolt_executed_source_sha256": "539747663b30f3d99bb596d3376025e578fa009cc622752171db963656aa79c7",
+    "qwen_executed_source_sha256": "42c2f4651bbcd632932599b26bd06e17fcd6fc10127a2a1604a57d715fb36ec7",
+    "tracked_harness_sha256": "f168a76e18b2774f1f4d03390b195ed217b860588890af09e9510799247a541e"
+  },
+  "memory_observation": {
+    "metric": "system MemAvailable",
+    "samples": 14432,
+    "interval_seconds": 2,
+    "start": "2026-10-18T08:42:14+09:00",
+    "end": "2026-10-18T16:44:38+09:00",
+    "minimum_gib": 34.57227325439453,
+    "below_stop_threshold": 0
+  },
+  "validation": {
+    "sandbox_selftest": "pass",
+    "probes_test": "pass",
+    "restoration": {
+      "resident": "Ornith",
+      "candidate_containers": "stopped",
+      "temporary_guard": "stopped",
+      "resident_timer": "active",
+      "permanent_memguard": "active",
+      "gate_authenticated_models": 200,
+      "gate_completion": 200,
+      "gate_unauthenticated_models": 401,
+      "candidate_exit_codes": {
+        "bolt": 0,
+        "qwen_qad": 0
+      },
+      "evaluation_tunnel": "closed"
+    }
+  }
+}

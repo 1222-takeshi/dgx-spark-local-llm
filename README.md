@@ -18,6 +18,7 @@ NVIDIA DGX Spark（GB10・128GB 統合メモリ）**1 台**で動かすローカ
 - **ローカルに T0（難問の司令塔）は置かない。** 難しい設計・難問はクラウドへ回す。
 - 1 台に載せるのは 1 モデルだけ（メモリ）。空きメモリは総量の 15% 以上を残す。
 - 詳細: [results/RESULTS.md](results/RESULTS.md)、運用方針: [docs/operations.md](docs/operations.md)
+- 追加評価（2026-10-18）: [Nemotron Bolt / Flash Next FP4 QAD](results/2026-10-18/README.md)（実測条件・API制約・再現manifest）。
 
 ## 構成
 
