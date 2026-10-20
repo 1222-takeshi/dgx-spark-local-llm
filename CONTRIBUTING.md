@@ -56,7 +56,7 @@ Issue → ブランチ → 実装 → 検査 → レビュー → PR → squash 
 
 ## CI（GitHub Actions）
 
-public にする目的は、GitHub-hosted runner を使うこと。以下は方針で、実装は #6（現状 `.github/` は未作成）。
+public にする目的は、GitHub-hosted runner を使うこと。以下は方針で、実装は [.github/workflows/ci.yml](.github/workflows/ci.yml)。
 
 - 実行は **GitHub-hosted runner のみ**。self-hosted runner を指定しない。`pull_request_target` は使わない。
 - `permissions: contents: read` を既定にする。リポジトリの secrets を使うジョブは作らない。

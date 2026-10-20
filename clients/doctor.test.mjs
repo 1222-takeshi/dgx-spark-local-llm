@@ -12,7 +12,7 @@ import {fileURLToPath} from 'node:url';
 import {parseEnv,loadConfig,runChecks,redact} from './doctor.mjs';
 
 const doctor=fileURLToPath(new URL('./doctor.mjs',import.meta.url));
-const TOKEN='sk-doctor-test-9f3a2b7c';
+const TOKEN='sk-doctor-test-9f3a2b7c';  // public-check: allow token
 const MODEL='ornith-1.5-35b-a3b-nvfp4';
 
 async function startMock(opts){

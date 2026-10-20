@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared config loader for the spark-* wrappers (sourced, not executed).
 # Reads KEY=VALUE lines without evaluating them and checks file modes.
 # Sets: SPARK_CONFIG_DIR, SPARK_TOKEN_FILE, SPARK_BASE_URL, SPARK_MODEL, SPARK_DENY_READ
