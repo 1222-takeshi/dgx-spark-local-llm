@@ -16,7 +16,7 @@ const TOKEN='sk-doctor-test-9f3a2b7c';
 const MODEL='ornith-1.5-35b-a3b-nvfp4';
 
 async function startMock(opts){
- const seen=[];
+ const seen=[]; let toolMaxTokens=0;
  const server=createServer(async(req,res)=>{
   const u=new URL(req.url,'http://'+req.headers.host);
   const p=u.pathname;
@@ -37,6 +37,8 @@ async function startMock(opts){
    if(!auth||!auth.startsWith('Bearer ')){res.writeHead(401);res.end(JSON.stringify({}));return;}
    const data=JSON.parse(body||'{}');
    if(data.tools){
+    toolMaxTokens=data.max_tokens;
+    if(opts.toolTruncated){res.writeHead(200);res.end(JSON.stringify({choices:[{finish_reason:'length',message:{role:'assistant',content:null}}]}));return;}
     const args=opts.toolArguments!==undefined?opts.toolArguments:JSON.stringify({city:'Tokyo'});
     const toolCall={index:0,id:'call_1',type:'function',function:{name:'get_weather',arguments:args}};
     const resp={choices:[{message:{role:'assistant',tool_calls:[toolCall]}}]};
@@ -58,7 +60,7 @@ async function startMock(opts){
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const base='http://127.0.0.1:'+server.address().port;
- return {base,server,seen,close:()=>new Promise(r=>{server.closeAllConnections&&server.closeAllConnections();server.close(r);})};
+ return {base,server,seen,close:()=>new Promise(r=>{server.closeAllConnections&&server.closeAllConnections();server.close(r);}),get toolMaxTokens(){return toolMaxTokens;}};
 }
 
 function cfgDir(envText,token){
@@ -185,7 +187,23 @@ test('tool-call with non-JSON arguments fails tool-call only',async(t)=>{
  const results=await runChecks(loadConfig(d),{fetch:globalThis.fetch,timeoutMs:5000});
  assert.equal(find(results,'tool-call').ok,false);
  for(const r of results) if(r.name!=='tool-call')assert.equal(r.ok,true);
- 
+
+});
+
+test('truncated before tool call fails tool-call only',async(t)=>{
+ const m=await startMock({toolTruncated:true}); t.after(()=>m.close());
+ const d=cfgDir('SPARK_LLM_BASE_URL='+m.base+'\n',TOKEN); t.after(()=>rmSync(d,{recursive:true,force:true}));
+ const results=await runChecks(loadConfig(d),{fetch:globalThis.fetch,timeoutMs:5000});
+ assert.equal(find(results,'tool-call').ok,false);
+ assert.ok(find(results,'tool-call').detail.includes('finish_reason=length'),'detail: '+find(results,'tool-call').detail);
+ for(const r of results) if(r.name!=='tool-call')assert.equal(r.ok,true);
+});
+
+test('tool-call request sends at least 512 max_tokens',async(t)=>{
+ const m=await startMock({}); t.after(()=>m.close());
+ const d=cfgDir('SPARK_LLM_BASE_URL='+m.base+'\n',TOKEN); t.after(()=>rmSync(d,{recursive:true,force:true}));
+ await runChecks(loadConfig(d),{fetch:globalThis.fetch,timeoutMs:5000});
+ assert.ok(m.toolMaxTokens>=512,'tool max_tokens='+m.toolMaxTokens);
 });
 
 test('server 401 for the correct key fails models only',async(t)=>{

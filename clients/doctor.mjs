@@ -6,6 +6,9 @@ import {homedir} from 'node:os';
 import {pathToFileURL} from 'node:url';
 
 const MODEL_DEFAULT='ornith-1.5-35b-a3b-nvfp4';
+// The tool-call request must leave head-room for reasoning before the tool call;
+// 64 truncates ~1/5 of runs. 512 is enough for the 63–104 completion tokens seen.
+const TOOL_CALL_MAX_TOKENS=512;
 const KNOWN=new Set(['SPARK_LLM_BASE_URL','SPARK_LLM_MODEL']);
 export function parseEnv(text){
  const out={};
@@ -105,12 +108,15 @@ export async function runChecks(config,{fetch,timeoutMs=120000}){
  if(r.ok&&r.status===200){j=parse(r.text);const t=j.type;push('messages',t==='message',t==='message'?'type=message':'type='+t+' '+D(r.text));}
  else push('messages',false, r.ok?'HTTP '+r.status+' '+D(r.text):D(r.error));
 
- r=await call(fetch,base_url+'/v1/chat/completions',{method:'POST',headers:B,body:{model,messages:[{role:'user',content:'What is the weather in Tokyo? Use the tool.'}],max_tokens:64,tools:[{type:'function',function:{name:'get_weather',description:'Current weather for a city.',parameters:{type:'object',properties:{city:{type:'string'},format:{type:'string'}},required:['city']}}}],tool_choice:'auto'}},timeoutMs);
+ r=await call(fetch,base_url+'/v1/chat/completions',{method:'POST',headers:B,body:{model,messages:[{role:'user',content:'What is the weather in Tokyo? Use the tool.'}],max_tokens:TOOL_CALL_MAX_TOKENS,tools:[{type:'function',function:{name:'get_weather',description:'Current weather for a city.',parameters:{type:'object',properties:{city:{type:'string'},format:{type:'string'}},required:['city']}}}],tool_choice:'auto'}},timeoutMs);
  if(r.ok&&r.status===200){
   j=parse(r.text);
   const tc=((j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.tool_calls)||[])[0]||{};
   const fn=tc.function||null; const name0=fn&&fn.name;
-  if(name0!=='get_weather')push('tool-call',false,'unexpected function='+JSON.stringify(name0)+' '+D(r.text));
+  if(name0!=='get_weather'){
+   if(j.choices&&j.choices[0]&&j.choices[0].finish_reason==='length')push('tool-call',false,'truncated before tool call (finish_reason=length)');
+   else push('tool-call',false,'unexpected function='+JSON.stringify(name0)+' '+D(r.text));
+  }
   else{try{JSON.parse(fn.arguments);push('tool-call',true,'get_weather');}catch{push('tool-call',false,'arguments not JSON: '+D(r.text));}}
  }
  else push('tool-call',false, r.ok?'HTTP '+r.status+' '+D(r.text):D(r.error));
