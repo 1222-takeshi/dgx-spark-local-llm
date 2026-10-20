@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Run Codex CLI against the Spark model through the gate without reading or
+# changing ~/.codex/config.toml (--ignore-user-config + -c overrides).
+# Arguments go to `codex exec`, e.g. `spark-codex -C <dir> -s workspace-write "task"`.
+set -euo pipefail
+
+# shellcheck source=clients/bin/spark-env.sh
+source "$(dirname "${BASH_SOURCE[0]}")/spark-env.sh"
+spark_load_env
+
+# Codex reads the key from the variable named by env_key; it is never on argv.
+SPARK_LLM_TOKEN="$(< "$SPARK_TOKEN_FILE")"
+export SPARK_LLM_TOKEN
+
+# vLLM /v1/responses rejects hosted web_search and the multi-agent namespace
+# tool, so both are disabled; wire_api="chat" is no longer supported by Codex.
+exec codex exec --ignore-user-config --ephemeral --skip-git-repo-check \
+  -c "model_providers.spark={name=\"Spark vLLM\",base_url=\"$SPARK_BASE_URL/v1\",env_key=\"SPARK_LLM_TOKEN\",wire_api=\"responses\",stream_idle_timeout_ms=600000}" \
+  -c 'model_provider="spark"' -m "$SPARK_MODEL" \
+  -c model_context_window=262144 -c 'web_search="disabled"' \
+  -c 'model_reasoning_summary="none"' -c features.multi_agent=false \
+  "$@" < /dev/null

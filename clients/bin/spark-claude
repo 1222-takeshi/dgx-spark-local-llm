@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Run Claude Code against the Spark model through the gate, isolated from the
+# user's settings, hooks, plugins, MCP servers and CLAUDE.md (--bare).
+# All arguments are passed to `claude`, e.g. `spark-claude -p "task" --output-format json`.
+set -euo pipefail
+
+# shellcheck source=clients/bin/spark-env.sh
+source "$(dirname "${BASH_SOURCE[0]}")/spark-env.sh"
+spark_load_env
+
+SETTINGS="$(mktemp "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/spark-claude.XXXXXX")"
+trap 'rm -f "$SETTINGS"' EXIT INT TERM
+chmod 600 "$SETTINGS"
+
+python3 - "$SETTINGS" "$SPARK_BASE_URL" "$SPARK_MODEL" "$SPARK_TOKEN_FILE" "$SPARK_CONFIG_DIR" "$SPARK_DENY_READ" <<'PY'
+import json, os, shlex, sys
+path, base_url, model, token_file, config_dir, extra_deny = sys.argv[1:]
+# The worker must not read credentials or private benchmark material.
+# Claude Code permission rules write absolute paths as "//abs/path".
+denied = [config_dir, os.path.expanduser("~/.ssh")] + [p for p in extra_deny.split(":") if p]
+deny_rules = [f"{tool}(/{os.path.abspath(p)}/**)" for p in denied for tool in ("Read", "Edit")]
+env = {
+    "ANTHROPIC_BASE_URL": base_url,
+    "ANTHROPIC_MODEL": model,
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": model,
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": model,
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": model,
+    "CLAUDE_CODE_SUBAGENT_MODEL": model,
+    "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "262144",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "16384",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "DISABLE_AUTOUPDATER": "1",
+    "API_TIMEOUT_MS": "900000",
+}
+settings = {
+    "apiKeyHelper": "cat " + shlex.quote(token_file),
+    "env": env,
+    "permissions": {"deny": deny_rules},
+    "skipWebFetchPreflight": True,
+}
+with open(path, "w", encoding="utf-8") as handle:
+    json.dump(settings, handle)
+PY
+
+set +e
+env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL \
+  claude --bare --settings "$SETTINGS" --strict-mcp-config --model "$SPARK_MODEL" "$@"
+status=$?
+set -e
+exit "$status"
