@@ -68,10 +68,41 @@ clients/bin/spark-codex -C <dir> -s workspace-write -o last.txt "<brief>"
 - key は環境変数（`env_key`）で渡し、コマンド引数には載せない。
 - 実測で 1 件あたり約 140 秒、入力 tokens が Claude Code の数十倍だった。短い作業は `spark-claude` を優先する。
 
-## Cursor
+## Cursor: `clients/mcp/spark-mcp.mjs`
 
 Cursor の custom model は Cursor のサーバーからリクエストを送るため、Tailscale 内のゲートには届かない。
-ゲートをインターネットへ公開する方法はとらない。ローカルの MCP サーバーから呼ぶ方式を別 PR で追加する。
+ゲートをインターネットへ公開する方法はとらない。
+
+代わりに、この PC で動く stdio の MCP サーバーがゲートを呼ぶ。
+Cursor のエージェント（チャットのモデルはクラウドのまま）が、tool `local_llm` を通して Spark のモデルに下書き・要約・レビューなどを頼める。
+
+`~/.cursor/mcp.json`（プロジェクト単位なら `.cursor/mcp.json`）に書く:
+
+```json
+{ "mcpServers": { "spark-local-llm": { "command": "node", "args": ["<repo>/clients/mcp/spark-mcp.mjs"] } } }
+```
+
+- 接続先と key は Claude Code・Codex と同じ `~/.config/spark-llm/{env,token}` を読む。
+  - `mcp.json` に key や URL は書かない。
+  - 設定の場所は `SPARK_LLM_CONFIG_DIR` で変えられる。
+- tool の引数:
+  - `prompt`（必須）
+  - `system`
+  - `max_tokens`（既定 4096、1〜32768）
+  - `temperature`
+- 返り値は本文のテキストだけ。
+  - モデルは本文の前に推論を書くため、`max_tokens` が小さいと `truncated` になる。
+- 1 回の呼び出しの上限時間は `SPARK_MCP_TIMEOUT_MS`（既定 600000 ms）。
+- 失敗（設定・HTTP・通信・打ち切り）は tool のエラーとして返す。
+  - 本文に key が含まれていれば伏せ字にする。
+  - stdout には JSON-RPC だけを書く。
+- 確認:
+
+  ```sh
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node clients/mcp/spark-mcp.mjs
+  ```
+
+  Cursor では Settings → MCP で `spark-local-llm` が緑になることを見る。
 
 ## 実測（2026-10-20、ornith-1.5-35b-a3b-nvfp4）
 
