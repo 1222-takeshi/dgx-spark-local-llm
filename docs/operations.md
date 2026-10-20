@@ -1,6 +1,6 @@
 # 運用方針（ローカル LLM を DGX Spark などで動かすとき）
 
-体制は、規模別の3段階・書き込みは1人・reviewer / explorer は read-only とする。ローカルでは **同時に動かす Agent の数をメモリと推論サーバーの上限で絞る。** 役割の割り当ては、判断が難しい部分は強いモデル（クラウドの Opus 等）、機械的な調査・整形・下書きはローカルモデル、を既定にする。
+体制は、規模別の3段階・書き込みは1人・reviewer / explorer は read-only とする。ローカルでは **同時に動かす Agent の数をメモリと推論サーバーの上限で絞る。** 役割の割り当ては、判断が難しい部分は強いモデル（クラウドの Opus 等）、機械的な調査・整形・下書きはローカルモデル、を既定にする。開発作業の委任の流れは [local-llm-policy.md](local-llm-policy.md) に従う。
 
 同時 Agent 数 = 次の最小値。
 1. サーバーの同時処理上限（SGLang / vLLM の `--max-running-requests`、llama.cpp の `--parallel` など）。

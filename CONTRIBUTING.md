@@ -6,7 +6,7 @@ DGX Spark でローカル LLM を運用するための**正本（single source o
 
 | 層 | 中身 |
 |---|---|
-| 方針 | 運用ルール（`dev-rules.md`。追加予定: #5）、`docs/operations.md`、モデルの階層（T0/T1/T2）、同時 Agent 数の決め方 |
+| 方針 | 運用ルール（`dev-rules.md`。追加予定: #5）、`docs/operations.md`、`docs/local-llm-policy.md`（作業者への委任）、モデルの階層（T0/T1/T2）、同時 Agent 数の決め方 |
 | 再現手段 | Spark の起動スクリプト、評価ハーネス、新しい PC の導入手順（追加予定: #5） |
 | 記録 | 評価結果の集計（`results/`）、日付付きの調査メモ（`docs/survey/`） |
 
