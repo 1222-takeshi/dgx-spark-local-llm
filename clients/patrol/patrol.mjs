@@ -147,7 +147,7 @@ export function buildPrMessages(pr, detail, trimmed) {
     'baseブランチ: ' + (detail.baseRefName || ''),
     'headブランチ: ' + (detail.headRefName || ''),
   ];
-  if (body) parts.push('body:\n' + body);
+  if (body) parts.push('body:\n' + fence(body));
   if (trimmed.truncated) parts.push('差分は一部のみ（' + trimmed.files_kept + '/' + trimmed.files_total + ' ファイル）');
   parts.push('差分:\n' + fence(trimmed.text));
   return [{role: 'system', content: PR_SYSTEM}, {role: 'user', content: parts.join('\n')}];
@@ -190,11 +190,17 @@ export function issueReportPath(outDir, date, issue) {
 
 function sec(ms) { return (ms / 1000).toFixed(1); }
 
+// A title is untrusted text. Collapse every run of CR/LF to a single space so it
+// can never forge extra lines in index.md or a report header.
+function oneLine(s) {
+  return String(s ?? '').replace(/[\r\n]+/g, ' ');
+}
+
 export function renderPrReport(pr, result, trimmed, model) {
   let cov = trimmed.files_kept + '/' + trimmed.files_total + ' ファイル';
   if (trimmed.truncated) cov += '（一部のみ）';
   return [
-    '# ' + pr.repo + '#' + pr.number + ' ' + pr.title,
+    '# ' + pr.repo + '#' + pr.number + ' ' + oneLine(pr.title),
     'URL: ' + pr.url,
     'head: ' + String(pr.head_sha || ''),
     'draft: ' + (pr.is_draft ? 'はい' : 'いいえ'),
@@ -209,7 +215,7 @@ export function renderPrReport(pr, result, trimmed, model) {
 export function renderIssueReport(issue, result, model) {
   const labels = issue.labels || [];
   return [
-    '# ' + issue.repo + '#' + issue.number + ' ' + issue.title,
+    '# ' + issue.repo + '#' + issue.number + ' ' + oneLine(issue.title),
     'URL: ' + issue.url,
     'labels: ' + (labels.length ? labels.join(', ') : 'なし'),
     'model: ' + model,
@@ -231,6 +237,75 @@ export function headerValue(text, key) {
 const MODEL_TIMEOUT_MS = 20 * 60 * 1000;
 const HEALTH_TIMEOUT_MS = 15000;
 
+// Extract the SSE payload from an event body. Only `data:` lines count; the
+// prefix and a single optional space are stripped. Returns null for an
+// empty event, '[DONE]' when the stream ended, or the joined data otherwise.
+function readSseEvent(rawEvent) {
+  const parts = [];
+  for (const line of rawEvent.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    parts.push(line.slice('data:'.length).replace(/^ /, ''));
+  }
+  return parts.length ? parts.join('\n') : null;
+}
+
+// Fold a parsed chunk into the accumulating result. Content and finish_reason
+// deltas are honoured; reasoning and any other field are ignored.
+function accumulate(chunk, out) {
+  if (chunk && chunk.usage) out.usage = chunk.usage;
+  const c = chunk && chunk.choices && chunk.choices[0];
+  if (c) {
+    if (typeof c.delta === 'object' && typeof c.delta.content === 'string' && c.delta.content) {
+      out.text += c.delta.content;
+    }
+    if (c.finish_reason) out.finish_reason = c.finish_reason;
+  }
+}
+
+// Parse one event. Returns false on [DONE], true to keep reading.
+function processEvent(rawEvent, out, config) {
+  const data = readSseEvent(rawEvent);
+  if (data === null) return true;
+  if (data === '[DONE]') return false;
+  let chunk;
+  try {
+    chunk = JSON.parse(data);
+  } catch {
+    throw new Error(redact('model returned a malformed stream event', config.token));
+  }
+  accumulate(chunk, out);
+  return true;
+}
+
+// Read a server-sent event stream and return {text, finish_reason, usage}.
+async function readSse(res, config) {
+  const decoder = new TextDecoder('utf-8');
+  const out = {text: '', finish_reason: null, usage: null};
+  let buffer = '';
+  const reader = res.body.getReader();
+  try {
+    for (;;) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true}).replace(/\r\n/g, '\n');
+      let sep;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const rawEvent = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        if (!processEvent(rawEvent, out, config)) return out;
+      }
+    }
+    // A last event may end without the blank line.
+    const rest = (buffer + decoder.decode()).replace(/\r\n/g, '\n');
+    for (const rawEvent of rest.split('\n\n')) {
+      if (!processEvent(rawEvent, out, config)) break;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return out;
+}
+
 export async function callModel({fetch, config, messages, timeoutMs}) {
   const url = config.base_url + '/v1/chat/completions';
   const timeout = typeof timeoutMs === 'number' ? timeoutMs : MODEL_TIMEOUT_MS;
@@ -243,8 +318,10 @@ export async function callModel({fetch, config, messages, timeoutMs}) {
       body: JSON.stringify({
         model: config.model,
         messages: messages,
-        max_tokens: 8192,
+        max_tokens: 32768,
         temperature: 0.2,
+        stream: true,
+        stream_options: {include_usage: true},
       }),
       signal: AbortSignal.timeout(timeout),
     });
@@ -255,6 +332,20 @@ export async function callModel({fetch, config, messages, timeoutMs}) {
     const text = await res.text().catch(() => '');
     throw new Error(redact('model returned HTTP ' + res.status + ': ' + text, config.token));
   }
+  // Prefer the streaming path: headers arrive late, so reading the body as it
+  // streams avoids the client header-timeout on a slow-thinking model.
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  if (ct.includes('text/event-stream')) {
+    const {text, finish_reason, usage} = await readSse(res, config);
+    if (finish_reason === 'length') {
+      throw new Error(redact('model hit max_tokens (finish_reason=length)', config.token));
+    }
+    if (!text) {
+      throw new Error(redact('model returned no message content', config.token));
+    }
+    return {text, finish_reason, usage, elapsed_ms: Date.now() - start};
+  }
+  // Non-streaming servers (and tests) still speak plain JSON.
   let data;
   try {
     data = JSON.parse(await res.text());
@@ -387,7 +478,7 @@ async function reviewPr(pr, {config, fetch, runGh, state, outDir, date, cfg, log
   const path = prReportPath(outDir, date, pr);
   ensureDir(dirname(path));
   writeReportFile(path, renderPrReport(pr, result, trimmed, config.model));
-  appendIndex(outDir, date, '- [PR] ' + headerValue(result.text, '判定') + ' ' + pr.repo + '#' + pr.number + ' ' + pr.title + ' → prs/' + basename(path));
+  appendIndex(outDir, date, '- [PR] ' + headerValue(result.text, '判定') + ' ' + pr.repo + '#' + pr.number + ' ' + oneLine(pr.title) + ' → prs/' + basename(path));
   state.reviewed[pr.repo + '#' + pr.number] = pr.head_sha;
   writeState(outDir, state);
 }
@@ -398,7 +489,7 @@ async function reviewIssue(it, {config, fetch, runGh, state, outDir, date, log})
   const path = issueReportPath(outDir, date, it);
   ensureDir(dirname(path));
   writeReportFile(path, renderIssueReport(it, result, config.model));
-  appendIndex(outDir, date, '- [Issue] 規模 ' + headerValue(result.text, '規模') + ' / 任せやすさ ' + headerValue(result.text, '任せやすさ') + ' ' + it.repo + '#' + it.number + ' ' + it.title + ' → issues/' + basename(path));
+  appendIndex(outDir, date, '- [Issue] 規模 ' + headerValue(result.text, '規模') + ' / 任せやすさ ' + headerValue(result.text, '任せやすさ') + ' ' + it.repo + '#' + it.number + ' ' + oneLine(it.title) + ' → issues/' + basename(path));
   state.seen[it.repo + '!issue#' + it.number] = it.updated_at;
   writeState(outDir, state);
 }
