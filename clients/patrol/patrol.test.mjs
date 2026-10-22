@@ -103,7 +103,7 @@ test('parsePatrolConfig errors name the bad repo entry and the unknown key',()=>
 
 const rawPr=(number,over={})=>({number,title:'PR '+number,url:'https://example.test/pr/'+number,headRefOid:sha('a'),isDraft:false,author:{login:'dev'},updatedAt:'2026-03-01T00:00:00Z',...over});
 const rawIssue=(number,over={})=>({number,title:'Issue '+number,url:'https://example.test/issue/'+number,updatedAt:'2026-03-02T00:00:00Z',labels:[{name:'bug'},{name:'docs'}],author:{login:'rep'},...over});
-const noState=()=>({reviewed:{},seen:{}});
+const noState=()=>({reviewed:{},seen:{},too_long:{}});
 const sel=(o={})=>({include_drafts:true,max_prs_per_run:10,max_issues_per_run:10,...o});
 
 test('selectPrs keeps config order, then ascending number, with the documented shape',()=>{
@@ -121,6 +121,12 @@ test('selectPrs skips drafts only when include_drafts is false',()=>{
 test('selectPrs skips a PR whose head sha was already reviewed, but not a new sha',()=>{
  const prs=[{repo:'own/alpha',prs:[rawPr(1),rawPr(2,{headRefOid:sha('c')})]}];
  const state={reviewed:{'own/alpha#1':sha('a'),'own/alpha#2':sha('b')},seen:{}};
+ assert.deepEqual(selectPrs(prs,state,sel()).map(p=>p.number),[2]);
+});
+
+test('selectPrs skips a PR whose review was too long for the same head sha, but not a new sha',()=>{
+ const prs=[{repo:'own/alpha',prs:[rawPr(1,{headRefOid:sha('a')}),rawPr(2,{headRefOid:sha('b')})]}];
+ const state={reviewed:{},seen:{},too_long:{'own/alpha#1':sha('a'),'own/alpha#2':sha('x')}};
  assert.deepEqual(selectPrs(prs,state,sel()).map(p=>p.number),[2]);
 });
 
@@ -215,6 +221,8 @@ test('buildPrMessages: system prompt asks for the exact shape and treats input a
  const sys=m[0].content;
  assert.match(sys,UNTRUSTED);
  for(const key of ['判定','BLOCKING','IMPORTANT','NIT','問題なし','要修正','要確認','なし'])assert.ok(sys.includes(key),key);
+ const last=m[1].content.trimEnd().split('\n').pop();
+ assert.ok(last.includes('判定:'),'the user message ends with a reminder of the verdict line: '+last);
 });
 
 test('buildPrMessages: user message carries repo, number, title, url, branches and fenced diff',()=>{
@@ -254,6 +262,8 @@ test('buildIssueMessages: system prompt asks for the exact shape and treats inpu
  assert.deepEqual(m.map(x=>x.role),['system','user']);
  assert.match(m[0].content,UNTRUSTED);
  for(const key of ['規模','任せやすさ','要約','方針案','確認したいこと'])assert.ok(m[0].content.includes(key),key);
+ const last=m[1].content.trimEnd().split('\n').pop();
+ assert.ok(last.includes('規模:')&&last.includes('任せやすさ:'),'the user message ends with a reminder of the two header lines: '+last);
 });
 
 test('buildIssueMessages: user message carries repo, number, title, url, labels and fenced body',()=>{
@@ -460,43 +470,56 @@ test('renderIssueReport: no labels shows なし',()=>{
  assert.ok(md.slice(0,md.indexOf('\n---\n')).includes('なし'));
 });
 
-test('headerValue finds, trims and defaults to 不明',()=>{
- assert.equal(headerValue('判定: 要修正\n## BLOCKING\n','判定'),'要修正');
- assert.equal(headerValue('判定:   要確認  \nrest','判定'),'要確認');
- assert.equal(headerValue('intro\n規模: M\n任せやすさ: 低\n','任せやすさ'),'低');
- assert.equal(headerValue('規模: S\n規模: L\n','規模'),'S','first matching line wins');
- assert.equal(headerValue('## BLOCKING\nなし','判定'),'不明');
- assert.equal(headerValue('見出し 判定: 問題なし\n','判定'),'不明','must start the line');
- assert.equal(headerValue('','規模'),'不明');
+test('headerValue finds the first header line and returns the allowed value it starts with',()=>{
+ const V=['問題なし','要修正','要確認'],SZ=['S','M','L'],DL=['高','中','低'];
+ assert.equal(headerValue('判定: 要修正\n## BLOCKING\n','判定',V),'要修正');
+ assert.equal(headerValue('判定: 要確認 \nrest','判定',V),'要確認');
+ assert.equal(headerValue('intro\n規模: M\n任せやすさ: 低\n','任せやすさ',DL),'低');
+ assert.equal(headerValue('規模: S\n規模: L\n','規模',SZ),'S','first header line wins');
+ assert.equal(headerValue('## BLOCKING\nなし','判定',V),'不明');
+ assert.equal(headerValue('見出し 判定: 問題なし\n','判定',V),'不明','the key must start the line');
+ assert.equal(headerValue('','規模',SZ),'不明');
+});
+
+test('headerValue tolerates markdown decoration, full-width colons and trailing reasons',()=>{
+ const SZ=['S','M','L'],DL=['高','中','低'];
+ assert.equal(headerValue('**規模: L**（GitHub 連携など）','規模',SZ),'L');
+ assert.equal(headerValue('**規模**: M','規模',SZ),'M');
+ assert.equal(headerValue('- 規模：S（小さい）','規模',SZ),'S');
+ assert.equal(headerValue('## 任せやすさ: 高','任せやすさ',DL),'高');
+ assert.equal(headerValue('> 任せやすさ： 中 です','任せやすさ',DL),'中');
+ assert.equal(headerValue('規模は「S」ですが\n規模: M','規模',SZ),'M','prose mentioning the key is not a header');
+ assert.equal(headerValue('規模: XL','規模',SZ),'不明','a value outside the allowed set');
+ assert.equal(headerValue('規模: S | M | L','規模',SZ),'不明','the unfilled template line');
 });
 
 // ---- readState / writeState ----
 
 test('readState reads a missing file as empty maps',t=>{
  const d=tmp(t);
- assert.deepEqual(readState(join(d,'nope')),{reviewed:{},seen:{}});
- assert.deepEqual(readState(d),{reviewed:{},seen:{}});
+ assert.deepEqual(readState(join(d,'nope')),{reviewed:{},seen:{},too_long:{}});
+ assert.deepEqual(readState(d),{reviewed:{},seen:{},too_long:{}});
 });
 
 test('readState fills a missing key and throws on corrupt JSON',t=>{
  const d=tmp(t);
  writeFileSync(join(d,'state.json'),JSON.stringify({reviewed:{'own/alpha#1':'abc'}}));
- assert.deepEqual(readState(d),{reviewed:{'own/alpha#1':'abc'},seen:{}});
+ assert.deepEqual(readState(d),{reviewed:{'own/alpha#1':'abc'},seen:{},too_long:{}});
  writeFileSync(join(d,'state.json'),JSON.stringify({seen:{'own/alpha!issue#1':'ts'}}));
- assert.deepEqual(readState(d),{reviewed:{},seen:{'own/alpha!issue#1':'ts'}});
+ assert.deepEqual(readState(d),{reviewed:{},seen:{'own/alpha!issue#1':'ts'},too_long:{}});
  writeFileSync(join(d,'state.json'),'{corrupt');
  assert.throws(()=>readState(d));
 });
 
 test('writeState round-trips, creates the dir 700, writes the file 600 and leaves no temp files',t=>{
  const d=join(tmp(t),'out');
- const state={reviewed:{'own/alpha#1':'abc'},seen:{'own/alpha!issue#2':'ts'}};
+ const state={reviewed:{'own/alpha#1':'abc'},seen:{'own/alpha!issue#2':'ts'},too_long:{'own/alpha#3':'def'}};
  writeState(d,state);
  assert.deepEqual(readState(d),state);
  assert.equal(mode(d),0o700);
  assert.equal(mode(join(d,'state.json')),0o600);
- writeState(d,{reviewed:{},seen:{}});
- assert.deepEqual(readState(d),{reviewed:{},seen:{}});
+ writeState(d,{reviewed:{},seen:{},too_long:{}});
+ assert.deepEqual(readState(d),{reviewed:{},seen:{},too_long:{}});
  assert.deepEqual(readdirSync(d),['state.json']);
  assert.equal(mode(join(d,'state.json')),0o600);
 });
@@ -632,10 +655,11 @@ test('runPatrol happy path: reports, index lines, state after each item',async t
  assert.deepEqual(readState(env.out),{
   reviewed:{'own/alpha#1':sha('a'),'own/alpha#2':sha('b'),'own/beta#5':sha('c')},
   seen:{'own/alpha!issue#4':'2026-03-02T00:00:00Z','own/beta!issue#3':'2026-03-02T00:00:00Z'},
+  too_long:{},
  });
  // state was already written for the earlier item when the next one started
  assert.deepEqual(midPr[0].reviewed,{'own/alpha#1':sha('a')});
- assert.deepEqual(midIssue[0],{reviewed:{'own/alpha#1':sha('a'),'own/alpha#2':sha('b'),'own/beta#5':sha('c')},seen:{'own/alpha!issue#4':'2026-03-02T00:00:00Z'}});
+ assert.deepEqual(midIssue[0],{reviewed:{'own/alpha#1':sha('a'),'own/alpha#2':sha('b'),'own/beta#5':sha('c')},seen:{'own/alpha!issue#4':'2026-03-02T00:00:00Z'},too_long:{}});
  // gh and model traffic
  assert.deepEqual(runGh.calls.slice(0,2),[gh.prList(A),gh.prList(B)]);
  assert.ok(runGh.calls.some(a=>JSON.stringify(a)===JSON.stringify(gh.prDiff(B,5))));
@@ -698,6 +722,36 @@ test('runPatrol: a PR whose model call fails lands in failed, keeps its state un
  assert.ok(!lines.some(l=>l.includes('FAILME')),'a failed PR gets no index line');
  noLeaks(env.logs);
  for(const l of env.logs)assert.ok(!l.includes('echoes'),'server error text must not be logged');
+});
+
+test('runPatrol: a PR whose review hits max_tokens is recorded as too long and not retried until its sha changes',async t=>{
+ const env=patrolEnv(t,{repos:[A]});
+ const routes=sh=>[
+  [gh.prList(A),[rawPr(1,{title:'HUGE',headRefOid:sh})]],[gh.prView(A,1),prDetailFor(1,{title:'HUGE'})],[gh.prDiff(A,1),prDiffFor(1)],
+  [gh.issueList(A),[]],
+ ];
+ const longFetch=()=>gateFetch({chat:()=>ok(reply('partial','length'))});
+ const r1=await run(env,fakeGh(routes(sha('a'))),longFetch());
+ assert.equal(r1.status,'partial');
+ assert.equal(r1.failed.length,1);
+ assert.deepEqual(readState(env.out).too_long,{'own/alpha#1':sha('a')});
+ assert.deepEqual(readState(env.out).reviewed,{});
+ const lines=readFileSync(join(env.out,DATE,'index.md'),'utf8').split('\n').filter(l=>l.length);
+ assert.deepEqual(lines,['# Patrol '+DATE,'- [PR] 長すぎて失敗 own/alpha#1 HUGE']);
+ const gh2=fakeGh(routes(sha('a')));
+ const r2=await run(env,gh2,longFetch());
+ assert.equal(r2.status,'ok');
+ assert.deepEqual(gh2.calls.filter(c=>c[1]==='view'||c[1]==='diff'),[],'not retried for the same sha');
+ const gh3=fakeGh(routes(sha('b')));
+ await run(env,gh3,gateFetch());
+ assert.deepEqual(readState(env.out).reviewed,{'own/alpha#1':sha('b')},'a new sha is reviewed again');
+});
+
+test('runPatrol: other model errors are not recorded as too long',async t=>{
+ const env=patrolEnv(t,{repos:[A]});
+ const runGh=fakeGh([[gh.prList(A),[rawPr(1)]],[gh.prView(A,1),prDetailFor(1)],[gh.prDiff(A,1),prDiffFor(1)],[gh.issueList(A),[]]]);
+ await run(env,runGh,gateFetch({chat:()=>ok('boom',500)}));
+ assert.deepEqual(readState(env.out).too_long,{});
 });
 
 test('runPatrol: a repo whose list call fails lands in failed and the others continue',async t=>{
